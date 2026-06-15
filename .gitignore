@@ -1,0 +1,5 @@
+.uploads/
+portfolio-site/
+.vercel/
+node_modules/
+*.log
