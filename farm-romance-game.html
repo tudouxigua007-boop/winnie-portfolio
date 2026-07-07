@@ -117,12 +117,11 @@
     .label{font-size:13px;font-weight:bold;background:var(--cream);border:2px solid var(--deep);display:inline-block;padding:3px 7px;margin-top:7px}
 
     .scene{position:relative;z-index:1;margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .character-card{min-height:320px;background:#9fd06b;border:4px solid var(--deep);padding:10px;position:relative;overflow:hidden;transition:background 1s,border-color 1s}
+    .character-card{min-height:260px;background:#9fd06b;border:4px solid var(--deep);padding:10px;position:relative;overflow:hidden;transition:background 1s,border-color 1s}
     body.night .character-card{background:#5a8a45;border-color:#2d3d26}
     .character-card:before{content:"";position:absolute;inset:auto 0 0 0;height:64px;background:#6ca454;border-top:4px solid var(--grass-dark);transition:background 1s}
     body.night .character-card:before{background:#3d5a3d;border-top-color:#2d4a1e}
-    .sprite{position:absolute;left:50%;top:20px;transform:translateX(-50%);width:140px;height:auto;cursor:pointer;z-index:2;transition:.12s;animation:breathe 3s ease-in-out infinite}
-    .sprite img{width:100%;height:auto;display:block;border-radius:12px;object-fit:contain}
+    .sprite{position:absolute;left:50%;top:44px;transform:translateX(-50%);width:92px;height:120px;cursor:pointer;image-rendering:pixelated;z-index:2;transition:.12s;animation:breathe 3s ease-in-out infinite}
     @keyframes breathe{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-3px)}}
     .sprite:hover{filter:brightness(1.08) saturate(1.05);animation:none;transform:translateX(-50%) translateY(-3px)}
     .sprite i{position:absolute;display:block;box-sizing:border-box}
@@ -137,7 +136,7 @@
     .bartender .face-parts:after{left:41px;width:12px;background:#7b2f3d;box-shadow:0 4px 0 #f2a0ad}
 
     .name-tag{position:absolute;left:10px;top:10px;background:var(--cream);border:3px solid var(--deep);padding:5px 8px;font-weight:bold;font-size:13px;z-index:3}
-    .bubble{position:absolute;left:50%;top:200px;transform:translateX(-50%);width:calc(100% - 28px);max-width:260px;background:var(--white);border:3px solid var(--deep);padding:8px;font-size:12px;line-height:1.45;box-shadow:4px 4px 0 rgba(91,59,46,.15);z-index:3;transition:all .3s}
+    .bubble{position:absolute;left:50%;top:172px;transform:translateX(-50%);width:calc(100% - 28px);max-width:260px;background:var(--white);border:3px solid var(--deep);padding:8px;font-size:12px;line-height:1.45;box-shadow:4px 4px 0 rgba(91,59,46,.15);z-index:3;transition:all .3s}
     .bubble:before{content:"";position:absolute;left:50%;top:-10px;transform:translateX(-50%);width:12px;height:12px;background:var(--white);border-left:3px solid var(--deep);border-top:3px solid var(--deep)}
 
     .side{display:grid;gap:14px}
@@ -213,7 +212,7 @@
     @keyframes hintBlink{0%,100%{opacity:.4}50%{opacity:1}}
 
     @media(max-width:980px){
-      .topbar,.layout,.farm-row,.scene{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.field{grid-template-columns:repeat(2,1fr)}.world{min-height:auto}.side{grid-template-columns:1fr}.character-card{min-height:280px}.bubble{top:220px}
+      .topbar,.layout,.farm-row,.scene{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.field{grid-template-columns:repeat(2,1fr)}.world{min-height:auto}.side{grid-template-columns:1fr}.character-card{min-height:250px}.bubble{top:172px}
       .splash-title{font-size:28px}.splash-sub{font-size:12px}
     }
     @media(max-width:600px){
@@ -295,15 +294,15 @@
         <div class="scene">
           <div class="character-card">
             <div class="name-tag">女主 · 独立农场主</div>
-            <div class="sprite farmer" id="farmer" title="这是你">
-              <img src="assets/cg-farmer.jpg" alt="女主">
+            <div class="sprite farmer" title="这是你">
+              <i class="hat"></i><i class="hair"></i><i class="head"></i><i class="body"></i><i class="legs"></i><i class="face-parts"></i>
             </div>
             <div class="bubble" id="playerBubble">今天要把晨露，留给第一株草莓。</div>
           </div>
           <div class="character-card" id="bartenderCard">
             <div class="name-tag">陆岚 · 小镇酒馆调酒师</div>
             <div class="sprite bartender" id="bartender" title="点击对话">
-              <img src="assets/cg-bartender.jpg" alt="陆岚">
+              <i class="hair"></i><i class="head"></i><i class="body"></i><i class="vest"></i><i class="legs"></i><i class="face-parts"></i>
             </div>
             <div class="bubble" id="barBubble">收工后来酒吧吧，我给你留一杯无酒精莓果气泡。</div>
           </div>
