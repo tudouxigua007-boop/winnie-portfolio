@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>像素农场微醺物语 · Pixel Farm Romance</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
+  <style>
+    :root{
+      --ink:#3c2f2f;--deep:#5b3b2e;--soil:#8a5635;--soil-dark:#623a28;
+      --grass:#7fbd5a;--grass-dark:#4f8b45;--sun:#ffd36b;--cream:#fff0c2;
+      --paper:#ffe5a3;--pink:#f08c8c;--red:#bf4f45;--blue:#74a7d8;
+      --water:#5eb6d6;--leaf:#5fa34b;--white:#fff7dc;--shadow:rgba(60,47,47,.22);
+      --night-sky:#1a1a2e;--night-grass:#3d5a3d;--star:rgba(255,247,220,.7);
+      --lavender:#b8a1d1;--sunflower:#f0c94a;--tomato:#e8745a;
+    }
+    *{box-sizing:border-box;user-select:none;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;min-height:100%;color:var(--ink);font-family:'Courier New','Microsoft YaHei',monospace;overflow-x:hidden}
+    body{background:linear-gradient(180deg,#82c8ef 0 28%,#9bd76c 28% 100%);transition:background 1.2s ease}
+    body.night{background:linear-gradient(180deg,#1a1a2e 0 28%,#3d5a3d 28% 100%)}
+
+    /* 开场画面 */
+    #splash{position:fixed;inset:0;z-index:100;background:linear-gradient(180deg,#2d1f1f,#5b3b2e);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .8s,visibility .8s}
+    #splash.hidden{opacity:0;visibility:hidden;pointer-events:none;display:none}
+    .splash-title{font-size:42px;color:var(--cream);text-shadow:3px 3px 0 var(--red),0 0 40px rgba(255,211,107,.3);margin-bottom:12px;letter-spacing:2px;animation:titlePulse 2.5s ease-in-out infinite}
+    @keyframes titlePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+    .splash-sub{font-size:14px;color:var(--paper);opacity:.8;margin-bottom:40px;text-align:center;max-width:400px;line-height:1.6}
+    .splash-btn{padding:14px 48px;background:var(--sun);border:4px solid var(--deep);color:var(--ink);font-family:inherit;font-size:18px;font-weight:bold;cursor:pointer;box-shadow:0 6px 0 var(--soil-dark),0 8px 20px rgba(0,0,0,.3);animation:btnFloat 2s ease-in-out infinite;transition:transform .15s}
+    .splash-btn:hover{transform:translateY(-2px)}
+    .splash-btn:active{transform:translateY(2px);box-shadow:0 2px 0 var(--soil-dark)}
+    @keyframes btnFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+    .splash-pixel-art{display:grid;grid-template-columns:repeat(7,14px);gap:2px;margin-bottom:30px}
+    .splash-pixel{width:14px;height:14px;border-radius:2px}
+
+    /* 天气粒子层 */
+    #weather-layer{position:fixed;inset:0;pointer-events:none;z-index:5;overflow:hidden}
+    .raindrop{position:absolute;width:2px;height:14px;background:rgba(174,216,255,.7);animation:rainFall linear infinite}
+    @keyframes rainFall{0%{transform:translateY(-20px)}100%{transform:translateY(100vh)}}
+    .snowflake{position:absolute;width:8px;height:8px;background:rgba(255,255,255,.85);border-radius:50%;animation:snowFall linear infinite}
+    @keyframes snowFall{0%{transform:translateY(-20px) rotate(0deg)}100%{transform:translateY(100vh) rotate(360deg)}}
+    .petal{position:absolute;width:10px;height:6px;background:rgba(255,140,140,.6);border-radius:50% 50% 50% 0;animation:petalFall linear infinite}
+    @keyframes petalFall{0%{transform:translateY(-20px) rotate(0deg)}100%{transform:translateY(100vh) rotate(720deg)}}
+    .firefly{position:absolute;width:4px;height:4px;background:#fff7a0;border-radius:50%;box-shadow:0 0 8px 2px rgba(255,247,160,.6);animation:fireflyFloat 4s ease-in-out infinite}
+    @keyframes fireflyFloat{0%,100%{opacity:.3;transform:translate(0,0)}25%{opacity:1;transform:translate(20px,-30px)}50%{opacity:.5;transform:translate(-10px,-50px)}75%{opacity:.9;transform:translate(30px,-20px)}}
+    .star{position:absolute;width:3px;height:3px;background:var(--star);border-radius:50%;animation:starTwinkle 2s ease-in-out infinite}
+    @keyframes starTwinkle{0%,100%{opacity:.3}50%{opacity:1}}
+    .cloud{position:absolute;background:rgba(255,255,255,.7);border-radius:50px;animation:cloudDrift linear infinite}
+    @keyframes cloudDrift{0%{transform:translateX(-200px)}100%{transform:translateX(calc(100vw + 200px))}}
+
+    /* 天空像素装饰 */
+    .sky-pixels{position:fixed;inset:0 0 auto 0;height:150px;pointer-events:none;background:linear-gradient(90deg,transparent 0 8%,rgba(255,247,220,.9) 8% 12%,transparent 12% 100%),linear-gradient(90deg,transparent 0 61%,rgba(255,247,220,.85) 61% 66%,transparent 66% 100%);opacity:.65;transition:opacity 1s}
+    body.night .sky-pixels{opacity:.1}
+
+    .game{max-width:1180px;margin:0 auto;padding:18px;position:relative;z-index:2}
+    .topbar{display:grid;grid-template-columns:1.4fr 1fr;gap:14px;align-items:stretch;margin-bottom:14px}
+
+    .pixel-panel,.dialogue,.toolbox,.quest,.shop,.achieve,.event-popup{
+      background:var(--paper);border:4px solid var(--deep);box-shadow:0 6px 0 var(--soil-dark),0 10px 18px var(--shadow);border-radius:0;image-rendering:pixelated;
+    }
+    .hero-title{padding:14px 16px;background:linear-gradient(180deg,var(--cream),var(--paper));position:relative;overflow:hidden}
+    .hero-title:after{content:"";position:absolute;right:18px;top:14px;width:44px;height:44px;background:var(--sun);box-shadow:8px 0 0 var(--sun),0 8px 0 var(--sun),8px 8px 0 var(--sun);animation:sunPulse 3s ease-in-out infinite}
+    @keyframes sunPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.1);opacity:.85}}
+    body.night .hero-title:after{background:#f0e6c8;box-shadow:8px 0 0 #f0e6c8,0 8px 0 #f0e6c8,8px 8px 0 #f0e6c8;opacity:.5}
+    h1{font-size:28px;line-height:1;margin:0 0 8px;text-shadow:2px 2px 0 #d59d55;letter-spacing:1px}
+    .subtitle{font-size:14px;line-height:1.55;max-width:720px}
+    .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:10px;background:var(--cream)}
+    .stat{background:var(--white);border:3px solid var(--deep);padding:8px;min-height:58px;text-align:center;box-shadow:inset 0 -4px 0 rgba(91,59,46,.13);transition:transform .15s}
+    .stat:hover{transform:translateY(-2px)}
+    .stat b{display:block;font-size:12px;color:var(--deep);margin-bottom:4px}.stat span{font-size:20px;font-weight:bold}
+    .stat.love-stat span{color:var(--red);transition:color .3s}
+
+    .layout{display:grid;grid-template-columns:260px 1fr 300px;gap:14px;align-items:start}
+    .toolbox{padding:12px}.section-title{font-weight:bold;font-size:16px;margin:0 0 10px;display:flex;align-items:center;gap:7px}.section-title:before{content:"◆";color:var(--red)}
+    .tool{width:100%;display:flex;align-items:center;justify-content:space-between;margin:8px 0;padding:10px 9px;background:var(--cream);border:3px solid var(--deep);box-shadow:0 4px 0 var(--soil-dark);font-family:inherit;font-weight:bold;color:var(--ink);cursor:pointer;transition:all .12s;position:relative;overflow:hidden}
+    .tool:hover{transform:translateY(1px);box-shadow:0 3px 0 var(--soil-dark);filter:brightness(1.04)}
+    .tool.active{background:var(--sun);outline:3px solid var(--red);box-shadow:0 3px 0 var(--soil-dark)}
+    .tool:disabled{opacity:.55;cursor:not-allowed;filter:grayscale(.3)}
+    .tool small{font-size:11px;opacity:.7;font-weight:normal}
+    .hint{font-size:12px;line-height:1.55;background:#ffd98c;border:3px solid var(--deep);padding:9px;margin-top:10px;animation:hintPulse 3s ease-in-out infinite}
+    @keyframes hintPulse{0%,100%{border-color:var(--deep)}50%{border-color:var(--red)}}
+
+    .world{background:#78b957;border:4px solid var(--deep);box-shadow:0 6px 0 var(--grass-dark),0 10px 18px var(--shadow);padding:14px;position:relative;min-height:640px;overflow:hidden;transition:background 1s,border-color 1s}
+    body.night .world{background:#4a6b3a;border-color:#2d3d26;box-shadow:0 6px 0 #354d28,0 10px 18px rgba(0,0,0,.4)}
+    .world:before{content:"";position:absolute;inset:0;background-image:linear-gradient(45deg,rgba(255,255,255,.08) 25%,transparent 25%,transparent 75%,rgba(255,255,255,.08) 75%),linear-gradient(45deg,rgba(255,255,255,.08) 25%,transparent 25%,transparent 75%,rgba(255,255,255,.08) 75%);background-size:32px 32px;background-position:0 0,16px 16px;pointer-events:none}
+    .farm-row{position:relative;z-index:1;display:grid;grid-template-columns:1fr 210px;gap:12px}
+    .field{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:10px;background:rgba(255,240,194,.28);border:3px solid var(--grass-dark);transition:border-color 1s}
+    body.night .field{border-color:#2d4a1e}
+
+    .plot{height:86px;background:var(--soil);border:4px solid var(--soil-dark);box-shadow:inset 0 8px 0 rgba(255,255,255,.08), inset 0 -8px 0 rgba(0,0,0,.12);cursor:pointer;position:relative;transition:all .2s}
+    .plot:hover{outline:4px solid var(--sun);transform:scale(1.02)}
+    .plot:active{transform:scale(.97)}
+    .plot:after{position:absolute;left:0;right:0;bottom:5px;text-align:center;font-size:30px;text-shadow:2px 2px 0 rgba(0,0,0,.22);transition:transform .3s}
+    .plot .plot-progress{position:absolute;bottom:2px;left:4px;right:4px;height:4px;background:rgba(0,0,0,.25);border-radius:2px;overflow:hidden;opacity:0;transition:opacity .3s}
+    .plot .plot-progress::after{content:'';display:block;height:100%;background:var(--sun);width:0%;transition:width .5s}
+    .plot:not(.empty) .plot-progress{opacity:1}
+    .plot.empty:after{content:""}.plot.seed:after{content:"· ·";color:#e4c07a;font-size:18px}.plot.wet{filter:saturate(.9) brightness(.82)}.plot.wet:before{content:"";position:absolute;left:10%;right:10%;top:18%;height:12px;background:var(--water);box-shadow:18px 22px 0 var(--water),74px 38px 0 var(--water);opacity:.65}
+    .plot.grown:after{content:"🌿"}.plot.mint:after{content:"🌿"}.plot.nightflower:after{content:"🌙"}.plot.strawberry:after{content:"🍓"}.plot.lavender:after{content:"💜"}.plot.sunflower:after{content:"🌻"}.plot.tomato:after{content:"🍅"}
+    .plot.mint{background:#7b5a3e}.plot.nightflower{background:#5f4a61}.plot.strawberry{background:#846044}.plot.lavender{background:#7a6b8a}.plot.sunflower{background:#8a7a3e}.plot.tomato{background:#8a5040}
+
+    /* 地块点击涟漪 */
+    .ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.4);transform:scale(0);animation:rippleAnim .6s ease-out;pointer-events:none}
+    @keyframes rippleAnim{to{transform:scale(3);opacity:0}}
+
+    /* 浮动数字 */
+    .float-num{position:absolute;font-size:14px;font-weight:bold;pointer-events:none;animation:floatUp 1s ease-out forwards;z-index:50;text-shadow:1px 1px 0 rgba(0,0,0,.3)}
+    @keyframes floatUp{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-40px)}}
+
+    .buildings{display:grid;grid-template-rows:1fr 1fr;gap:12px}
+    .building{background:var(--paper);border:4px solid var(--deep);position:relative;min-height:120px;box-shadow:inset 0 -8px 0 rgba(91,59,46,.18);padding:8px;text-align:center;cursor:pointer;transition:all .15s}
+    .building:hover{outline:4px solid var(--sun);transform:translateY(-2px)}
+    .building:active{transform:translateY(1px)}
+    .roof{height:30px;margin:-8px -8px 8px;background:var(--red);border-bottom:4px solid var(--deep);position:relative;overflow:hidden}
+    .roof::after{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);animation:roofShine 3s ease-in-out infinite}
+    @keyframes roofShine{0%,100%{left:-100%}50%{left:100%}}
+    .barn-icon,.bar-icon{font-size:44px;line-height:1;margin-top:8px;filter:drop-shadow(2px 2px 0 rgba(60,47,47,.3));display:inline-block;transition:transform .3s}
+    .building:hover .barn-icon,.building:hover .bar-icon{transform:scale(1.1) rotate(-3deg)}
+    .label{font-size:13px;font-weight:bold;background:var(--cream);border:2px solid var(--deep);display:inline-block;padding:3px 7px;margin-top:7px}
+
+    .scene{position:relative;z-index:1;margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .character-card{min-height:260px;background:#9fd06b;border:4px solid var(--deep);padding:10px;position:relative;overflow:hidden;transition:background 1s,border-color 1s}
+    body.night .character-card{background:#5a8a45;border-color:#2d3d26}
+    .character-card:before{content:"";position:absolute;inset:auto 0 0 0;height:64px;background:#6ca454;border-top:4px solid var(--grass-dark);transition:background 1s}
+    body.night .character-card:before{background:#3d5a3d;border-top-color:#2d4a1e}
+    .sprite{position:absolute;left:50%;top:44px;transform:translateX(-50%);width:92px;height:120px;cursor:pointer;image-rendering:pixelated;z-index:2;transition:.12s;animation:breathe 3s ease-in-out infinite}
+    @keyframes breathe{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-3px)}}
+    .sprite:hover{filter:brightness(1.08) saturate(1.05);animation:none;transform:translateX(-50%) translateY(-3px)}
+    .sprite i{position:absolute;display:block;box-sizing:border-box}
+    .face-parts{position:absolute;left:0;top:0;width:100%;height:100%;z-index:6}
+    .face-parts:before{content:"";position:absolute;left:31px;top:39px;width:6px;height:8px;background:var(--ink);box-shadow:24px 0 0 var(--ink),-8px 14px 0 #ff9aa2,32px 14px 0 #ff9aa2}
+    .face-parts:after{content:"";position:absolute;left:42px;top:56px;width:10px;height:4px;background:#8b3b4a;box-shadow:0 4px 0 #f6b1b8}
+
+    /* 女主精灵 */
+    .farmer .hat{left:17px;top:0;width:58px;height:20px;background:#f2c86f;border:4px solid var(--deep);box-shadow:-12px 10px 0 #f2c86f,12px 10px 0 #f2c86f,0 6px 0 #f6dd8a}.farmer .hat:after{content:"";position:absolute;left:20px;top:-8px;width:12px;height:12px;background:#ff7f9a;border:3px solid var(--deep)}.farmer .hair{left:18px;top:22px;width:56px;height:42px;background:#8a5434;border:4px solid var(--deep);box-shadow:-8px 15px 0 #8a5434,8px 22px 0 #8a5434}.farmer .head{left:24px;top:29px;width:44px;height:40px;background:#f6bb88;border:4px solid var(--deep);box-shadow:0 4px 0 #ffd0a6 inset}.farmer .body{left:22px;top:68px;width:48px;height:34px;background:#7fb4e8;border:4px solid var(--deep);box-shadow:12px 0 0 #ffe7ef inset}.farmer .body:after{content:"";position:absolute;left:-10px;top:11px;width:8px;height:16px;background:#f6bb88;border:3px solid var(--deep);box-shadow:56px 0 0 #f6bb88,56px 0 0 3px var(--deep)}.farmer .legs{left:24px;top:98px;width:18px;height:18px;background:#6b4a35;border:4px solid var(--deep);box-shadow:26px 0 0 #6b4a35,26px 0 0 4px var(--deep)}
+    /* 男主精灵 */
+    .bartender .hair{left:18px;top:9px;width:56px;height:34px;background:#3d3142;border:4px solid var(--deep);box-shadow:8px -6px 0 #51405a,-8px 12px 0 #3d3142}.bartender .head{left:24px;top:31px;width:44px;height:39px;background:#f1ad7b;border:4px solid var(--deep);box-shadow:0 4px 0 #ffd0a6 inset}.bartender .body{left:18px;top:69px;width:56px;height:33px;background:#fff6dc;border:4px solid var(--deep)}.bartender .vest{left:24px;top:72px;width:44px;height:32px;background:#7b4651;border-left:4px solid var(--deep);border-right:4px solid var(--deep);box-shadow:18px 0 0 #5f3440 inset}.bartender .vest:after{content:"";position:absolute;left:15px;top:6px;width:5px;height:5px;background:#ffd86b;box-shadow:0 11px 0 #ffd86b}.bartender .body:after{content:"";position:absolute;left:-10px;top:10px;width:8px;height:16px;background:#f1ad7b;border:3px solid var(--deep);box-shadow:64px 0 0 #f1ad7b,64px 0 0 3px var(--deep)}.bartender .legs{left:24px;top:99px;width:18px;height:17px;background:#302735;border:4px solid var(--deep);box-shadow:26px 0 0 #302735,26px 0 0 4px var(--deep)}
+    .bartender .face-parts:after{left:41px;width:12px;background:#7b2f3d;box-shadow:0 4px 0 #f2a0ad}
+
+    .name-tag{position:absolute;left:10px;top:10px;background:var(--cream);border:3px solid var(--deep);padding:5px 8px;font-weight:bold;font-size:13px;z-index:3}
+    .bubble{position:absolute;left:50%;top:172px;transform:translateX(-50%);width:calc(100% - 28px);max-width:260px;background:var(--white);border:3px solid var(--deep);padding:8px;font-size:12px;line-height:1.45;box-shadow:4px 4px 0 rgba(91,59,46,.15);z-index:3;transition:all .3s}
+    .bubble:before{content:"";position:absolute;left:50%;top:-10px;transform:translateX(-50%);width:12px;height:12px;background:var(--white);border-left:3px solid var(--deep);border-top:3px solid var(--deep)}
+
+    .side{display:grid;gap:14px}
+    .dialogue{padding:12px;min-height:212px;position:relative}
+    .portrait{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+    .mini-face{width:48px;height:48px;background:#e7a270;border:4px solid var(--deep);position:relative;transition:transform .2s}
+    .mini-face:hover{transform:scale(1.1)}
+    .mini-face:before{content:"";position:absolute;left:8px;top:10px;width:8px;height:8px;background:var(--ink);box-shadow:20px 0 0 var(--ink)}.mini-face:after{content:"";position:absolute;left:15px;bottom:9px;width:16px;height:5px;background:var(--pink)}
+    .dialogue-text{font-size:14px;line-height:1.6;min-height:88px;background:var(--white);border:3px solid var(--deep);padding:10px;transition:all .3s}
+    .choice{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+    .choice button,.shop button,.event-popup button{font-family:inherit;font-weight:bold;color:var(--ink);background:var(--cream);border:3px solid var(--deep);padding:8px;box-shadow:0 3px 0 var(--soil-dark);cursor:pointer;transition:all .15s}
+    .choice button:hover,.shop button:hover,.event-popup button:hover{background:var(--sun);transform:translateY(-1px)}
+    .choice button:active,.shop button:active,.event-popup button:active{transform:translateY(2px);box-shadow:0 1px 0 var(--soil-dark)}
+
+    .quest,.shop,.achieve{padding:12px}.quest ul{margin:8px 0 0;padding-left:18px;font-size:13px;line-height:1.65}.done{text-decoration:line-through;opacity:.65}
+    .shop-grid{display:grid;grid-template-columns:1fr;gap:8px}.shop button{display:flex;justify-content:space-between;align-items:center;width:100%}
+
+    /* 成就弹窗 */
+    .achieve-popup{position:fixed;left:50%;top:-100px;transform:translateX(-50%);background:var(--sun);border:4px solid var(--deep);padding:12px 24px;font-size:15px;font-weight:bold;z-index:60;box-shadow:0 6px 0 var(--soil-dark),0 10px 20px rgba(0,0,0,.3);transition:top .5s cubic-bezier(.175,.885,.32,1.275);text-align:center}
+    .achieve-popup.show{top:20px}
+    .achieve-popup .achieve-icon{font-size:28px;display:block;margin-bottom:4px}
+
+    /* 事件弹窗 */
+    .event-popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:55;display:none;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+    .event-popup-overlay.show{display:flex}
+    .event-popup{background:var(--paper);border:5px solid var(--deep);padding:24px;max-width:420px;width:90%;text-align:center;box-shadow:0 8px 0 var(--soil-dark),0 15px 30px rgba(0,0,0,.4)}
+    .event-popup h3{margin:0 0 12px;font-size:20px;color:var(--deep)}
+    .event-popup p{font-size:14px;line-height:1.7;margin:0 0 16px}
+    .event-popup button{padding:10px 32px;font-size:14px}
+
+    /* 关系进度条 */
+    .love-bar{height:8px;background:rgba(91,59,46,.15);border-radius:4px;margin:6px 0;overflow:hidden;position:relative}
+    .love-bar-fill{height:100%;background:linear-gradient(90deg,var(--pink),var(--red));border-radius:4px;transition:width .6s ease}
+    .love-stage{text-align:center;font-size:11px;color:var(--deep);margin-top:2px;font-weight:bold}
+
+    .log{margin-top:14px;background:rgba(255,240,194,.8);border:4px solid var(--deep);height:120px;overflow:auto;padding:8px;font-size:12px;line-height:1.5;position:relative;z-index:1;scroll-behavior:smooth}
+    .log p{margin:0 0 4px;animation:logIn .3s ease}.log p.new{animation:logIn .5s ease}
+    @keyframes logIn{0%{opacity:0;transform:translateY(-6px)}100%{opacity:1;transform:translateY(0)}}
+    .log::-webkit-scrollbar{width:6px}
+    .log::-webkit-scrollbar-thumb{background:var(--soil);border-radius:3px}
+    .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:var(--white);border:4px solid var(--cream);padding:10px 16px;font-weight:bold;box-shadow:0 6px 0 rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:.18s;z-index:50;font-size:14px;white-space:nowrap}
+    .toast.show{opacity:1;bottom:34px}
+
+    .footer-note{text-align:center;font-size:12px;opacity:.85;margin-top:14px}
+    .version-tag{position:fixed;right:10px;bottom:10px;font-size:10px;opacity:.4;z-index:3}
+
+    /* 天气标签 */
+    .weather-tag{position:absolute;top:10px;right:14px;background:rgba(255,255,255,.85);border:3px solid var(--deep);padding:4px 10px;font-size:12px;font-weight:bold;z-index:4;display:flex;align-items:center;gap:5px}
+    body.night .weather-tag{background:rgba(40,30,40,.85);color:var(--cream);border-color:#4a3a4a}
+
+    /* 日夜切换提示 */
+    .day-transition{position:fixed;inset:0;background:var(--ink);opacity:0;pointer-events:none;z-index:45;transition:opacity 1s}
+    .day-transition.show{opacity:.4}
+
+    /* ========== 剧情立绘系统 ========== */
+    .cg-overlay{position:fixed;inset:0;z-index:80;display:none;align-items:flex-end;justify-content:center;opacity:0;transition:opacity .8s}
+    .cg-overlay.show{display:flex;opacity:1}
+    .cg-bg{position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,10,25,.92) 0%,rgba(30,20,15,.95) 50%,rgba(20,15,10,.98) 100%);backdrop-filter:blur(6px)}
+    .cg-content{position:relative;z-index:2;width:100%;max-width:960px;padding:0 20px 50px;display:flex;flex-direction:column;align-items:center}
+    .cg-characters{display:flex;justify-content:center;align-items:flex-end;gap:30px;margin-bottom:-10px;position:relative;height:380px;width:100%}
+    .cg-standee{position:relative;width:240px;height:360px;transition:all .5s ease}
+    .cg-standee.active{transform:translateY(-8px) scale(1.03)}
+    .cg-standee.dimmed{opacity:.35;filter:grayscale(.4) brightness(.7);transform:translateY(0) scale(.97)}
+    .standee-img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 8px 24px rgba(0,0,0,.6));transition:filter .3s}
+    .cg-standee.active .standee-img{filter:drop-shadow(0 12px 32px rgba(255,180,120,.25))}
+
+    /* 剧情对话框 */
+    .cg-dialogue-box{position:relative;width:100%;max-width:780px;background:linear-gradient(180deg,var(--cream),var(--paper));border:4px solid var(--deep);box-shadow:0 8px 0 var(--soil-dark),0 12px 24px rgba(0,0,0,.4);padding:20px 24px 16px;min-height:120px;animation:dialogueBoxEnter .6s ease-out .3s both}
+    @keyframes dialogueBoxEnter{0%{opacity:0;transform:translateY(30px)}100%{opacity:1;transform:translateY(0)}}
+    .cg-name-plate{position:absolute;top:-16px;left:20px;background:var(--red);color:var(--white);border:3px solid var(--deep);padding:4px 16px;font-size:14px;font-weight:bold;box-shadow:0 3px 0 var(--soil-dark)}
+    .cg-text{font-size:16px;line-height:1.75;color:var(--ink);min-height:56px}
+    .cg-click-hint{text-align:right;font-size:11px;color:var(--soil);margin-top:8px;opacity:.7;animation:hintBlink 1.5s ease-in-out infinite}
+    @keyframes hintBlink{0%,100%{opacity:.4}50%{opacity:1}}
+
+    @media(max-width:980px){
+      .topbar,.layout,.farm-row,.scene{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.field{grid-template-columns:repeat(2,1fr)}.world{min-height:auto}.side{grid-template-columns:1fr}.character-card{min-height:250px}.bubble{top:172px}
+      .splash-title{font-size:28px}.splash-sub{font-size:12px}
+    }
+    @media(max-width:600px){
+      .game{padding:10px}.layout{gap:10px}.toolbox,.side{order:2}.world{order:1}
+      .stats{grid-template-columns:repeat(3,1fr)}.stat span{font-size:16px}
+      .farm-row{grid-template-columns:1fr}.buildings{grid-template-columns:1fr 1fr;grid-template-rows:1fr}
+    }
+  </style>
+</head>
+<body>
+  <!-- 开场画面 -->
+  <div id="splash">
+    <div class="splash-pixel-art" id="splashPixels"></div>
+    <div class="splash-title">像素农场微醺物语</div>
+    <div class="splash-sub">你继承了祖母留下的农场。<br>白天耕种，傍晚在小镇微醺酒吧遇见调酒师陆岚。<br>经营农场，也经营心动。</div>
+    <button class="splash-btn" id="startBtn">🌱 开始农场生活</button>
+    <div style="margin-top:20px;font-size:11px;color:var(--paper);opacity:.5">按任意键或点击开始</div>
+  </div>
+
+  <!-- 天气层 -->
+  <div id="weather-layer"></div>
+  <div class="day-transition" id="dayTransition"></div>
+
+  <!-- 成就弹窗 -->
+  <div class="achieve-popup" id="achievePopup"><span class="achieve-icon">🏆</span><span id="achieveText">达成成就！</span></div>
+
+  <!-- 事件弹窗 -->
+  <div class="event-popup-overlay" id="eventOverlay">
+    <div class="event-popup">
+      <h3 id="eventTitle">今日事件</h3>
+      <p id="eventDesc">...</p>
+      <button onclick="closeEvent()">知道了</button>
+    </div>
+  </div>
+
+  <div class="sky-pixels"></div>
+  <main class="game">
+    <section class="topbar">
+      <div class="pixel-panel hero-title">
+        <h1>像素农场微醺物语</h1>
+        <div class="subtitle">你继承了祖母留下的农场。白天种薄荷、草莓与夜香花，照顾鸡舍；傍晚去小镇微醺酒吧找调酒师陆岚聊天。用鼠标点击地块、建筑和角色，经营农场，也经营心动。</div>
+      </div>
+      <div class="pixel-panel stats">
+        <div class="stat"><b>日期</b><span id="day">1</span></div>
+        <div class="stat"><b>金币</b><span id="gold">80</span></div>
+        <div class="stat"><b>体力</b><span id="energy">18</span></div>
+        <div class="stat love-stat"><b>好感</b><span id="love">0</span></div>
+        <div class="stat"><b>等级</b><span id="level">1</span></div>
+      </div>
+    </section>
+
+    <section class="layout">
+      <aside class="toolbox">
+        <div class="section-title">农场工具</div>
+        <button class="tool active" data-tool="seed">🌱 播种薄荷 <small>-5G / -2体</small></button>
+        <button class="tool" data-tool="water">💧 浇水 <small>-1体</small></button>
+        <button class="tool" data-tool="harvest">🧺 收获 <small>+金币</small></button>
+        <button class="tool" data-tool="fertilizer">⚡ 施肥 <small>-15G / 加速</small></button>
+        <button class="tool" data-tool="flower">🌙 夜香花 <small>-12G</small></button>
+        <button class="tool" data-tool="pumpkin">🍓 草莓 <small>-18G</small></button>
+        <button class="tool" data-tool="lavender">💜 薰衣草 <small>-22G</small></button>
+        <button class="tool" data-tool="sunflower">🌻 向日葵 <small>-28G</small></button>
+        <button class="tool" id="restBtn">🌙 睡到明天</button>
+        <button class="tool" id="saveBtn" style="background:linear-gradient(180deg,#a8e6cf,#8fd3b8)">💾 手动存档 <small>保存进度</small></button>
+        <button class="tool" id="resetBtn" style="background:linear-gradient(180deg,#f4a6a6,#e07a7a)">🔄 重新开始 <small>清除存档</small></button>
+        <div class="hint">先选工具，再点击田地。作物浇水后过夜成熟。点击酒吧或男主互动。按天数推进剧情~</div>
+      </aside>
+
+      <section class="world">
+        <div class="weather-tag" id="weatherTag">☀️ 晴朗</div>
+        <div class="farm-row">
+          <div class="field" id="field"></div>
+          <div class="buildings">
+            <div class="building" id="coop"><div class="roof"></div><div class="barn-icon">🐔</div><span class="label">鸡舍：点击喂鸡</span></div>
+            <div class="building" id="bar"><div class="roof"></div><div class="bar-icon">🍸</div><span class="label">微醺酒吧：接订单</span></div>
+          </div>
+        </div>
+
+        <div class="scene">
+          <div class="character-card">
+            <div class="name-tag">女主 · 独立农场主</div>
+            <div class="sprite farmer" title="这是你">
+              <i class="hat"></i><i class="hair"></i><i class="head"></i><i class="body"></i><i class="legs"></i><i class="face-parts"></i>
+            </div>
+            <div class="bubble" id="playerBubble">今天要把晨露，留给第一株草莓。</div>
+          </div>
+          <div class="character-card" id="bartenderCard">
+            <div class="name-tag">陆岚 · 小镇酒馆调酒师</div>
+            <div class="sprite bartender" id="bartender" title="点击对话">
+              <i class="hair"></i><i class="head"></i><i class="body"></i><i class="vest"></i><i class="legs"></i><i class="face-parts"></i>
+            </div>
+            <div class="bubble" id="barBubble">收工后来酒吧吧，我给你留一杯无酒精莓果气泡。</div>
+          </div>
+        </div>
+        <div class="log" id="log"></div>
+      </section>
+
+      <aside class="side">
+        <div class="dialogue">
+          <div class="section-title">对话互动</div>
+          <div class="portrait"><div class="mini-face"></div><strong>陆岚</strong></div>
+          <div class="dialogue-text" id="dialogueText">点击男主，或者选择下面的互动。好感越高，对话越甜。</div>
+          <div class="choice">
+            <button id="talkBtn">💬 聊天</button>
+            <button id="giftBtn">🌷 送花</button>
+          </div>
+          <div class="love-bar"><div class="love-bar-fill" id="loveBar" style="width:0%"></div></div>
+          <div class="love-stage" id="loveStage">陌生人</div>
+        </div>
+        <div class="quest">
+          <div class="section-title" id="questTitle">今日小目标</div>
+          <ul>
+            <li id="q1">收获 3 次作物</li>
+            <li id="q2">喂鸡 1 次</li>
+            <li id="q3">与陆岚互动 2 次</li>
+            <li id="q4">完成酒吧订单 1 次</li>
+          </ul>
+        </div>
+        <div class="quest" id="orderPanel">
+          <div class="section-title">🍸 今日酒馆订单</div>
+          <div id="orderContent" style="font-size:13px;line-height:1.7">
+            <div id="orderDesc">加载中...</div>
+            <div id="orderReward" style="margin-top:6px;color:var(--soil)"></div>
+            <div id="orderStatus" style="margin-top:6px;font-weight:bold"></div>
+          </div>
+        </div>
+        <div class="shop">
+          <div class="section-title">农场背包</div>
+          <div class="shop-grid">
+            <button><span>🌿 薄荷</span><span id="wheat">0</span></button>
+            <button><span>🌷 夜香花</span><span id="flowers">0</span></button>
+            <button><span>🍓 草莓</span><span id="strawberries">0</span></button>
+            <button><span>💜 薰衣草</span><span id="lavenders">0</span></button>
+            <button><span>🌻 向日葵</span><span id="sunflowers">0</span></button>
+            <button><span>🥚 鸡蛋</span><span id="eggs">0</span></button>
+          </div>
+        </div>
+        <div class="achieve">
+          <div class="section-title">成就</div>
+          <div class="shop-grid" id="achieveList">
+            <button disabled><span>🌱 初出茅庐</span><span id="ach1">🔒</span></button>
+            <button disabled><span>💰 小有积蓄</span><span id="ach2">🔒</span></button>
+            <button disabled><span>💕 心动初现</span><span id="ach3">🔒</span></button>
+            <button disabled><span>🌙 夜香传情</span><span id="ach4">🔒</span></button>
+            <button disabled><span>🏆 农场大师</span><span id="ach5">🔒</span></button>
+          </div>
+        </div>
+      </aside>
+    </section>
+    <div class="footer-note">原创复古像素农场微醺物语 v2.0。所有角色与场景均由 HTML/CSS 绘制。面试作品集项目。</div>
+    <div class="version-tag">v2.0</div>
+  </main>
+  <div class="toast" id="toast"></div>
+
+  <!-- 剧情立绘覆盖层 -->
+  <div id="cgOverlay" class="cg-overlay">
+    <div class="cg-bg"></div>
+    <div class="cg-content">
+      <div class="cg-characters">
+        <div class="cg-standee cg-farmer-standee" id="cgFarmer">
+          <img src="assets/cg-farmer.jpg" alt="女主" class="standee-img">
+        </div>
+        <div class="cg-standee cg-bartender-standee" id="cgBartender">
+          <img src="assets/cg-bartender.jpg" alt="陆岚" class="standee-img">
+        </div>
+      </div>
+      <div class="cg-dialogue-box" id="cgDialogueBox">
+        <div class="cg-name-plate" id="cgNamePlate">陆岚</div>
+        <div class="cg-text" id="cgText"></div>
+        <div class="cg-click-hint">▼ 点击继续</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ========== 游戏状态 ==========
+  const state = {
+    day:1, gold:80, energy:18, love:0, level:1, tool:'seed', weather:'sunny',
+    inv:{mint:0,nightflowers:0,strawberries:0,lavenders:0,sunflowers:0,eggs:0,fertilizers:1},
+    quest:{harvest:0,coop:false,talk:0,barOrder:false},
+    plots:Array.from({length:12},()=>({type:'empty',watered:false,age:0,growth:0})),
+    achievements:{novice:false,rich:false,crush:false,nightflower:false,master:false},
+    seenEvents:{},tutorialDone:false,
+    storyQuests:{firstMeet:false,rainUmbrella:false,nightVisitor:false,sweetTipsy:false,eternalPromise:false},
+    dailyOrder:null, dailyTalkCount:0
+  };
+
+  // ========== 配置数据 ==========
+  const cropMap = {
+    seed:{cost:5,type:'mint',name:'薄荷',sell:13,growDays:1},
+    flower:{cost:12,type:'nightflower',name:'夜香花',sell:22,growDays:1},
+    pumpkin:{cost:18,type:'strawberry',name:'草莓',sell:36,growDays:2},
+    lavender:{cost:22,type:'lavender',name:'薰衣草',sell:28,growDays:2},
+    sunflower:{cost:28,type:'sunflower',name:'向日葵',sell:42,growDays:2}
+  };
+  const orderPool=[
+    {need:'mint',needAmt:2,give:45,love:1,name:'薄荷',text:'给酒馆送去 2 份薄荷，陆岚做了"薄荷草莓气泡"。'},
+    {need:'nightflowers',needAmt:1,give:35,love:2,name:'夜香花',text:'陆岚用夜香花调制了"月光坠落"，说是新品。'},
+    {need:'strawberries',needAmt:2,give:55,love:1,name:'草莓',text:'草莓季限定特调"农场主的心跳"大受欢迎！'},
+    {need:'lavenders',needAmt:2,give:50,love:2,name:'薰衣草',text:'薰衣草金酒卖断货了，陆岚说是你的功劳。'}
+  ];
+  const names = {empty:'空地',mint:'薄荷',nightflower:'夜香花',strawberry:'草莓',lavender:'薰衣草',sunflower:'向日葵'};
+  const cropClass = {mint:'grown mint',nightflower:'nightflower',strawberry:'strawberry',lavender:'lavender',sunflower:'sunflower'};
+  const weatherTypes = [
+    {id:'sunny',name:'☀️ 晴朗',bg:'linear-gradient(180deg,#82c8ef 0 28%,#9bd76c 28% 100%)',nightBg:'linear-gradient(180deg,#1a1a2e 0 28%,#3d5a3d 28% 100%)',effect:'none'},
+    {id:'rainy',name:'🌧️ 小雨',bg:'linear-gradient(180deg,#6a8fa8 0 28%,#7ab856 28% 100%)',nightBg:'linear-gradient(180deg,#121225 0 28%,#2d4a2d 28% 100%)',effect:'rain'},
+    {id:'foggy',name:'🌫️ 薄雾',bg:'linear-gradient(180deg,#8a9eaa 0 28%,#9bc47a 28% 100%)',nightBg:'linear-gradient(180deg,#1e1e30 0 28%,#3d5a3d 28% 100%)',effect:'fog'},
+    {id:'snowy',name:'❄️ 小雪',bg:'linear-gradient(180deg,#a8c0d0 0 28%,#b8d4a0 28% 100%)',nightBg:'linear-gradient(180deg,#1a1a2e 0 28%,#3d4a3d 28% 100%)',effect:'snow'}
+  ];
+  const loveStages = [
+    {min:0,name:'陌生人',color:'#8a8a8a'},
+    {min:3,name:'初识',color:'#74a7d8'},
+    {min:8,name:'熟人',color:'#5fa34b'},
+    {min:15,name:'暧昧',color:'#f08c8c'},
+    {min:25,name:'心动',color:'#bf4f45'},
+    {min:40,name:'恋人',color:'#ff6b9d'}
+  ];
+
+  // ========== 特殊剧情任务 ==========
+  const storyQuestsData = {
+    firstMeet:{
+      id:'firstMeet',title:'初遇',cond:(s)=>s.day>=2&&!s.storyQuests.firstMeet,
+      cg:[
+        {speaker:'陆岚',text:'「你……就是新来的农场主？」',show:'bartender'},
+        {speaker:'陆岚',text:'「我叫陆岚，在镇上的微醺酒吧当调酒师。」',show:'bartender'},
+        {speaker:'陆岚',text:'「如果收工后没地方去，可以来坐坐。我给你留一杯无酒精的莓果气泡。」',show:'bartender'},
+        {speaker:'女主',text:'「……谢谢。」',show:'farmer'},
+        {speaker:'陆岚',text:'「啊，对了。」他转身从吧台拿出一小袋薄荷种子，「这个送你，就当见面礼。」',show:'bartender'}
+      ],
+      reward:()=>{state.inv.mint+=3;state.love+=2;return '获得薄荷种子x3，好感+2'}
+    },
+    rainUmbrella:{
+      id:'rainUmbrella',title:'雨中共伞',cond:(s)=>s.day>=4&&s.love>=5&&s.weather==='rainy'&&!s.storyQuests.rainUmbrella,
+      cg:[
+        {speaker:'陆岚',text:'「下雨了。」',show:'bartender'},
+        {speaker:'陆岚',text:'「这把伞有点小，但……刚好够两个人。」',show:'bartender'},
+        {speaker:'女主',text:'「……你是故意的吗？」',show:'farmer'},
+        {speaker:'陆岚',text:'「被发现了。」他低头笑了一下，「那……一起走回去？」',show:'bartender'},
+        {speaker:'陆岚',text:'「雨声有点大，不介意我离你近一点吧。」',show:'bartender'}
+      ],
+      reward:()=>{state.love+=5;return '陆岚好感+5'}
+    },
+    nightVisitor:{
+      id:'nightVisitor',title:'深夜访客',cond:(s)=>s.day>=6&&s.love>=10&&!s.storyQuests.nightVisitor,
+      cg:[
+        {speaker:'陆岚',text:'「这么晚了还没睡？」',show:'bartender'},
+        {speaker:'陆岚',text:'「我做了点热汤，想你可能还没吃晚饭。」',show:'bartender'},
+        {speaker:'女主',text:'「你……专门跑过来的？」',show:'farmer'},
+        {speaker:'陆岚',text:'「嗯。」他垂下眼，「酒吧打烊了，我就想着……来看看你。」',show:'bartender'},
+        {speaker:'陆岚',text:'「农场主大人。」他顿了顿，「你的农场，比我的酒单好看多了。」',show:'bartender'}
+      ],
+      reward:()=>{state.love+=5;state.gold+=50;return '陆岚好感+5，他偷偷塞给你50G'}
+    },
+    sweetTipsy:{
+      id:'sweetTipsy',title:'甜蜜微醺',cond:(s)=>s.love>=20&&!s.storyQuests.sweetTipsy,
+      cg:[
+        {speaker:'陆岚',text:'「我给你调了一杯新的。」',show:'bartender'},
+        {speaker:'女主',text:'「叫什么名字？」',show:'farmer'},
+        {speaker:'陆岚',text:'「……甜蜜微醺。」',show:'bartender'},
+        {speaker:'陆岚',text:'「秘方是农场主大人的微笑。」',show:'bartender'},
+        {speaker:'女主',text:'「……笨蛋。」',show:'farmer'},
+        {speaker:'陆岚',text:'「只对你笨。」',show:'bartender'}
+      ],
+      reward:()=>{state.love+=8;return '陆岚好感+8'}
+    },
+    eternalPromise:{
+      id:'eternalPromise',title:'永恒之约',cond:(s)=>s.love>=35&&!s.storyQuests.eternalPromise,
+      cg:[
+        {speaker:'陆岚',text:'「等向日葵开满田埂……」',show:'bartender'},
+        {speaker:'陆岚',text:'「我想在这里一直住下去。」',show:'bartender'},
+        {speaker:'女主',text:'「……酒吧不要了？」',show:'farmer'},
+        {speaker:'陆岚',text:'「酒吧可以开分店。」',show:'bartender'},
+        {speaker:'陆岚',text:'「但你在的地方，才是我想停留的地方。」',show:'bartender'},
+        {speaker:'女主',text:'「……你就这么确定我想让你留下？」',show:'farmer'},
+        {speaker:'陆岚',text:'「不确定。」',show:'bartender'},
+        {speaker:'陆岚',text:'「所以我打算在农场旁边开个分店。」',show:'bartender'},
+        {speaker:'陆岚',text:'「你想见我的时候，我就在店里调酒；你想一个人待着的时候，我就只隔着窗户看看你。」',show:'bartender'},
+        {speaker:'女主',text:'「……」',show:'farmer'},
+        {speaker:'女主',text:'「那如果我说，我不想隔着窗户呢？」',show:'farmer'}
+      ],
+      reward:()=>{state.love+=10;state.gold+=200;return '陆岚好感+10，他交出了全部积蓄200G'}
+    }
+  };
+
+  // ========== DOM引用 ==========
+  const field = document.getElementById('field');
+  const logEl = document.getElementById('log');
+  const toast = document.getElementById('toast');
+  const dialogueText = document.getElementById('dialogueText');
+  const barBubble = document.getElementById('barBubble');
+  const playerBubble = document.getElementById('playerBubble');
+  const weatherTag = document.getElementById('weatherTag');
+  const weatherLayer = document.getElementById('weather-layer');
+  const loveBar = document.getElementById('loveBar');
+  const loveStageEl = document.getElementById('loveStage');
+  const dayTransition = document.getElementById('dayTransition');
+  const eventOverlay = document.getElementById('eventOverlay');
+  const questTitle = document.getElementById('questTitle');
+
+  // ========== 工具函数 ==========
+  function addLog(text){const p=document.createElement('p');p.textContent='▸ '+text;p.className='new';logEl.prepend(p);setTimeout(()=>p.className='',500)}
+  function showToast(text){toast.textContent=text;toast.classList.add('show');clearTimeout(showToast.t);showToast.t=setTimeout(()=>toast.classList.remove('show'),1800)}
+  function showFloatNum(el,text,color='#bf4f45'){const num=document.createElement('div');num.className='float-num';num.textContent=text;num.style.color=color;num.style.left='50%';num.style.top='30%';num.style.transform='translateX(-50%)';el.appendChild(num);setTimeout(()=>num.remove(),1000)}
+  function getLoveStage(){for(let i=loveStages.length-1;i>=0;i--)if(state.love>=loveStages[i].min)return loveStages[i];return loveStages[0]}
+  function playSound(freq=.4,dur=.1){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();const osc=ctx.createOscillator();const gain=ctx.createGain();osc.connect(gain);gain.connect(ctx.destination);osc.frequency.value=300+freq*400;osc.type='sine';gain.gain.setValueAtTime(.08,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+dur);osc.start();osc.stop(ctx.currentTime+dur)}catch(e){}}
+
+  // ========== 剧情立绘展示系统 ==========
+  const cgOverlay=document.getElementById('cgOverlay');
+  const cgText=document.getElementById('cgText');
+  const cgNamePlate=document.getElementById('cgNamePlate');
+  const cgFarmer=document.getElementById('cgFarmer');
+  const cgBartender=document.getElementById('cgBartender');
+  let cgQueue=[];let cgIndex=0;let currentStoryId=null;
+
+  function showCG(storyId){
+    const data=storyQuestsData[storyId];if(!data)return;
+    currentStoryId=storyId;cgQueue=data.cg;cgIndex=0;
+    cgOverlay.classList.add('show');showCGFrame()
+  }
+  function showCGFrame(){
+    if(cgIndex>=cgQueue.length){closeCG();return}
+    const frame=cgQueue[cgIndex];
+    cgNamePlate.textContent=frame.speaker;
+    cgText.textContent='';
+    // 角色显示控制
+    cgFarmer.className='cg-standee cg-farmer-standee'+(frame.show==='farmer'?' active':' dimmed');
+    cgBartender.className='cg-standee cg-bartender-standee'+(frame.show==='bartender'?' active':' dimmed');
+    // 打字机效果
+    let i=0;const txt=frame.text;
+    cgText.dataset.fullText=txt;
+    function typeChar(){if(i<=txt.length){cgText.textContent=txt.slice(0,i);i++;if(i<=txt.length)setTimeout(typeChar,28)}else{cgText.dataset.typing='done'}}
+    cgText.dataset.typing='typing';typeChar();playSound(.3,.03)
+  }
+  function advanceCG(){if(cgText.dataset.typing==='typing'){cgText.textContent=cgText.dataset.fullText;cgText.dataset.typing='done';return}cgIndex++;showCGFrame()}
+  function closeCG(){cgOverlay.classList.remove('show');cgFarmer.className='cg-standee cg-farmer-standee';cgBartender.className='cg-standee cg-bartender-standee';if(currentStoryId){state.storyQuests[currentStoryId]=true;const data=storyQuestsData[currentStoryId];const rewardMsg=data.reward();addLog('【剧情任务完成：'+data.title+'】'+rewardMsg);playSound(1,.3);showToast('剧情任务完成！');render();save();currentStoryId=null}}
+  cgOverlay.onclick=(e)=>{if(e.target.classList&&e.target.classList.contains('cg-bg'))return;advanceCG()};
+
+  // ========== 剧情任务触发 ==========
+  function checkStoryQuests(){
+    for(const key in storyQuestsData){
+      const q=storyQuestsData[key];
+      if(!state.storyQuests[key]&&q.cond(state)){
+        setTimeout(()=>showCG(key),600);return true
+      }
+    }
+    return false
+  }
+
+  // ========== 开场画面 ==========
+  const splashPixels=document.getElementById('splashPixels');
+  const pixelColors=['#f2c86f','#ff7f9a','#7fbd5a','#74a7d8','#f08c8c','#ffd36b'];
+  for(let i=0;i<49;i++){const d=document.createElement('div');d.className='splash-pixel';d.style.background=pixelColors[Math.floor(Math.random()*pixelColors.length)];d.style.opacity=Math.random()>.3?1:.3;splashPixels.appendChild(d)}
+  function hideSplash(){
+    const sp=document.getElementById('splash');
+    sp.classList.add('hidden');
+    setTimeout(()=>{sp.style.display='none'},800);
+    if(!state.tutorialDone){setTimeout(()=>{showTutorial();state.tutorialDone=true;save()},400)}
+  }
+  document.getElementById('startBtn').onclick=hideSplash;
+  document.addEventListener('keydown',(e)=>{if(!document.getElementById('splash').classList.contains('hidden')){hideSplash()}},{once:true});
+
+  function showTutorial(){showEvent('欢迎来到像素农场','你是新上任的农场主！选择左侧工具，点击田地进行操作。浇水后的作物过夜就会成熟。记得去酒吧找陆岚聊天哦~','开始经营')}
+
+  // ========== 事件弹窗 ==========
+  function showEvent(title,desc,btnText){document.getElementById('eventTitle').textContent=title;document.getElementById('eventDesc').textContent=desc;eventOverlay.querySelector('button').textContent=btnText||'知道了';eventOverlay.classList.add('show')}
+  function closeEvent(){eventOverlay.classList.remove('show')}
+  window.closeEvent=closeEvent;
+
+  // ========== 成就系统 ==========
+  function checkAchievements(){
+    const checks=[
+      {key:'novice',cond:state.level>=3,el:'ach1'},
+      {key:'rich',cond:state.gold>=300,el:'ach2'},
+      {key:'crush',cond:state.love>=15,el:'ach3'},
+      {key:'nightflower',cond:state.inv.nightflowers>=5,el:'ach4'},
+      {key:'master',cond:state.level>=8,el:'ach5'}
+    ];
+    checks.forEach(c=>{if(!state.achievements[c.key]&&c.cond){state.achievements[c.key]=true;unlockAchievement(c.key,c.el)}})
+  }
+  function unlockAchievement(key,elId){
+    const names={novice:'初出茅庐',rich:'小有积蓄',crush:'心动初现',nightflower:'夜香传情',master:'农场大师'};
+    document.getElementById(elId).textContent='✅';playSound(.8,.2);
+    const popup=document.getElementById('achievePopup');document.getElementById('achieveText').textContent='达成成就：'+names[key];popup.classList.add('show');setTimeout(()=>popup.classList.remove('show'),2500)
+  }
+
+  // ========== 天气系统 ==========
+  function updateWeather(){
+    const rand=Math.random();
+    let w;if(rand<.5)w='sunny';else if(rand<.75)w='rainy';else if(rand<.9)w='foggy';else w='snowy';
+    state.weather=w;const info=weatherTypes.find(x=>x.id===w);weatherTag.textContent=info.name;weatherLayer.innerHTML='';
+    document.body.style.background=info.bg;
+    if(info.effect==='rain')for(let i=0;i<40;i++){const d=document.createElement('div');d.className='raindrop';d.style.left=Math.random()*100+'vw';d.style.animationDuration=(.4+Math.random()*.6)+'s';d.style.animationDelay=Math.random()*2+'s';weatherLayer.appendChild(d)}
+    else if(info.effect==='snow')for(let i=0;i<25;i++){const d=document.createElement('div');d.className='snowflake';d.style.left=Math.random()*100+'vw';d.style.animationDuration=(3+Math.random()*4)+'s';d.style.animationDelay=Math.random()*3+'s';weatherLayer.appendChild(d)}
+    else if(info.effect==='fog'){const fog=document.createElement('div');fog.style.cssText='position:absolute;inset:0;background:rgba(255,255,255,.25);pointer-events:none';weatherLayer.appendChild(fog)}
+    // 云
+    for(let i=0;i<3;i++){const c=document.createElement('div');c.className='cloud';c.style.width=(80+Math.random()*120)+'px';c.style.height=(30+Math.random()*20)+'px';c.style.top=(10+Math.random()*80)+'px';c.style.left='-200px';c.style.animationDuration=(20+Math.random()*20)+'s';c.style.animationDelay=(Math.random()*10)+'s';weatherLayer.appendChild(c)}
+    // 萤火虫（夜晚）
+    if(state.day%2===0){for(let i=0;i<8;i++){const f=document.createElement('div');f.className='firefly';f.style.left=Math.random()*100+'vw';f.style.top=(30+Math.random()*70)+'vh';f.style.animationDelay=Math.random()*4+'s';weatherLayer.appendChild(f)}}
+  }
+
+  // ========== 昼夜切换 ==========
+  function setNight(isNight){
+    if(isNight){document.body.classList.add('night');const info=weatherTypes.find(x=>x.id===state.weather);document.body.style.background=info.nightBg;
+      for(let i=0;i<20;i++){const s=document.createElement('div');s.className='star';s.style.left=Math.random()*100+'vw';s.style.top=Math.random()*25+'vh';s.style.animationDelay=Math.random()*2+'s';s.style.width=s.style.height=(2+Math.random()*2)+'px';weatherLayer.appendChild(s)}
+    }else{document.body.classList.remove('night');const info=weatherTypes.find(x=>x.id===state.weather);document.body.style.background=info.bg}
+  }
+
+  // ========== 每日事件 ==========
+  function triggerDailyEvent(){
+    // 优先检查剧情任务
+    if(checkStoryQuests())return;
+    const events=[
+      {cond:state.day===3&&!state.seenEvents['d3'],id:'d3',title:'神秘的包裹',desc:'你在信箱里发现一个匿名包裹，里面是一包薰衣草种子和一张手写便签："给有故事的人。——L"',btn:'谢谢...L？'},
+      {cond:state.day===5&&state.love>=5&&!state.seenEvents['d5'],id:'d5',title:'雨中共伞',desc:'陆岚撑着一把旧伞等在农场门口："这把伞有点小，但刚好够两个人。"雨声里，你们肩并肩走回农场。好感度+2',btn:'...靠太近了'},
+      {cond:state.day===7&&state.love>=10&&!state.seenEvents['d7'],id:'d7',title:'深夜访客',desc:'深夜，陆岚带着一盏灯和一篮子食材出现在门口："怕黑的话，我陪你守夜。"',btn:'...嗯'},
+      {cond:state.weather==='rainy'&&state.love>=3&&!state.seenEvents['rain'],id:'rain',title:'雨天特调',desc:'陆岚说雨天最适合喝"微醺花园"——一种加了薄荷和热牛奶的特调。他免费请你喝一杯，体力+3',btn:'好温暖'}
+    ];
+    const ev=events.find(e=>e.cond);if(ev){state.seenEvents[ev.id]=true;showEvent(ev.title,ev.desc,ev.btn);if(ev.id==='d5'){state.love+=2;addLog('特殊事件：雨中共伞，陆岚好感 +2')}
+    else if(ev.id==='d7'){state.love+=3;addLog('特殊事件：深夜访客，陆岚好感 +3')}
+    else if(ev.id==='rain'){state.energy=Math.min(state.energy+3,20+state.level*2);addLog('雨天特调：体力恢复 +3')}
+    else if(ev.id==='d3'){state.inv.lavenders+=3;addLog('收到神秘包裹：薰衣草种子 x3')}}
+  }
+
+  // ========== 存档兼容 ==========
+  function normalizeSaveData(){
+    state.inv.mint=state.inv.mint||state.inv.wheat||0;
+    state.inv.nightflowers=state.inv.nightflowers||state.inv.flowers||0;
+    state.inv.strawberries=state.inv.strawberries||0;
+    state.inv.lavenders=state.inv.lavenders||0;
+    state.inv.sunflowers=state.inv.sunflowers||0;
+    state.inv.eggs=state.inv.eggs||0;
+    state.inv.fertilizers=state.inv.fertilizers||0;
+    if(!state.quest.barOrder)state.quest.barOrder=false;
+    if(!state.achievements)state.achievements={novice:false,rich:false,crush:false,nightflower:false,master:false};
+    if(!state.seenEvents||typeof state.seenEvents!=='object'||Array.isArray(state.seenEvents))state.seenEvents={};
+    if(!state.weather)state.weather='sunny';
+    if(!state.storyQuests)state.storyQuests={firstMeet:false,rainUmbrella:false,nightVisitor:false,sweetTipsy:false,eternalPromise:false};
+    if(typeof state.dailyTalkCount!=='number')state.dailyTalkCount=0;
+    if(!state.dailyOrder&&orderPool)state.dailyOrder=orderPool[Math.floor(Math.random()*orderPool.length)];
+    state.plots.forEach(plot=>{if(plot.type==='wheat')plot.type='mint';if(plot.type==='flower')plot.type='nightflower';if(plot.type==='pumpkin')plot.type='strawberry';if(!plot.growth&&plot.growth!==0)plot.growth=0})
+  }
+
+  // ========== 渲染 ==========
+  function render(){
+    normalizeSaveData();
+    document.getElementById('day').textContent=state.day;
+    document.getElementById('gold').textContent=state.gold;
+    document.getElementById('energy').textContent=state.energy;
+    document.getElementById('love').textContent=state.love;
+    document.getElementById('level').textContent=state.level;
+    document.getElementById('wheat').textContent=state.inv.mint;
+    document.getElementById('flowers').textContent=state.inv.nightflowers;
+    document.getElementById('strawberries').textContent=state.inv.strawberries;
+    document.getElementById('lavenders').textContent=state.inv.lavenders;
+    document.getElementById('sunflowers').textContent=state.inv.sunflowers;
+    document.getElementById('eggs').textContent=state.inv.eggs;
+    document.getElementById('q1').className=state.quest.harvest>=3?'done':'';
+    document.getElementById('q2').className=state.quest.coop?'done':'';
+    document.getElementById('q3').className=state.quest.talk>=2?'done':'';
+    document.getElementById('q4').className=state.quest.barOrder?'done':'';
+    // 关系进度
+    const stage=getLoveStage();loveStageEl.textContent=stage.name;loveStageEl.style.color=stage.color;
+    const maxLove=loveStages[loveStages.length-1].min;loveBar.style.width=Math.min(100,state.love/maxLove*100)+'%';
+    // 田地
+    field.innerHTML='';state.plots.forEach((plot,i)=>{
+      const div=document.createElement('div');let cls='plot ';
+      if(plot.type==='empty')cls+='empty';else if(plot.age>=cropMap[Object.keys(cropMap).find(k=>cropMap[k].type===plot.type)]?.growDays||1)cls+=cropClass[plot.type]||'grown';else cls+='seed';
+      if(plot.watered)cls+=' wet';div.className=cls;div.title='点击操作';div.onclick=(e)=>{usePlot(i,e)};
+      const prog=document.createElement('div');prog.className='plot-progress';const cropInfo=Object.values(cropMap).find(c=>c.type===plot.type);
+      if(cropInfo&&plot.type!=='empty'){const total=cropInfo.growDays;const pct=Math.min(100,Math.floor((plot.age/total)*100));prog.style.setProperty('--prog',pct+'%');prog.querySelector&&prog.querySelector('::after')}
+      // 手动设置进度条
+      if(cropInfo&&plot.type!=='empty'){const total=cropInfo.growDays;const pct=Math.min(100,Math.floor((plot.age/total)*100));prog.innerHTML='<div style="height:100%;background:var(--sun);width:'+pct+'%;transition:width .5s"></div>'}
+      div.appendChild(prog);field.appendChild(div)
+    });
+    document.querySelectorAll('.tool[data-tool]').forEach(btn=>btn.classList.toggle('active',btn.dataset.tool===state.tool));
+    // 更新今日订单UI
+    const orderDesc=document.getElementById('orderDesc');
+    const orderReward=document.getElementById('orderReward');
+    const orderStatus=document.getElementById('orderStatus');
+    if(state.dailyOrder){
+      const o=state.dailyOrder;
+      const have=state.inv[o.need]||0;
+      orderDesc.textContent='陆岚需要 '+o.needAmt+' 份「'+o.name+'」，目前背包有 '+have+' 份。';
+      orderReward.textContent='提交奖励：'+o.give+'G + 好感度+'+o.love;
+      if(state.quest.barOrder){orderStatus.textContent='✅ 今日订单已完成';orderStatus.style.color='var(--leaf)'}
+      else if(have>=o.needAmt){orderStatus.textContent='💡 背包充足，点击酒吧即可提交！';orderStatus.style.color='var(--blue)'}
+      else{orderStatus.textContent='⏳ 背包不足，快去种植吧！';orderStatus.style.color='var(--soil)'}
+    }else{orderDesc.textContent='今日暂无订单';orderReward.textContent='';orderStatus.textContent=''}
+    checkAchievements()
+  }
+
+  function spendEnergy(n){if(state.energy<n){showToast('体力不足，睡一觉吧');return false}state.energy-=n;return true}
+
+  function usePlot(i,event){
+    const plot=state.plots[i];const plotEl=event?.target||field.children[i];
+    // 涟漪效果
+    if(plotEl&&event){const r=document.createElement('div');r.className='ripple';const rect=plotEl.getBoundingClientRect();r.style.width=r.style.height='30px';r.style.left=(event.clientX-rect.left-15)+'px';r.style.top=(event.clientY-rect.top-15)+'px';plotEl.appendChild(r);setTimeout(()=>r.remove(),600)}
+
+    if(state.tool==='fertilizer'){
+      if(plot.type==='empty')return showToast('空地不需要施肥');
+      if(state.inv.fertilizers<=0&&state.gold<15)return showToast('没有肥料了，金币也不够买');
+      if(state.inv.fertilizers>0)state.inv.fertilizers--;else{state.gold-=15}
+      plot.age=Math.max(plot.age,1);plot.watered=true;
+      showFloatNum(plotEl,'⚡ 加速!','#ffd36b');playSound(.6,.15);
+      addLog('施肥成功！作物一夜之间就能成熟。');render();save();return
+    }
+
+    if(['seed','flower','pumpkin','lavender','sunflower'].includes(state.tool)){
+      const crop=cropMap[state.tool];
+      if(plot.type!=='empty')return showToast('这块地已经种着东西啦');
+      if(state.gold<crop.cost)return showToast('金币不够买'+crop.name+'种子');
+      if(!spendEnergy(2))return;
+      state.gold-=crop.cost;plot.type=crop.type;plot.watered=false;plot.age=0;plot.growth=0;
+      showFloatNum(plotEl,'-'+crop.cost+'G','#8a5635');playSound(.2,.1);
+      addLog('种下了'+crop.name+'种子。陆岚说过，新鲜香草最适合做晚间特调。');
+    }else if(state.tool==='water'){
+      if(plot.type==='empty')return showToast('空地不用浇水');
+      if(plot.watered)return showToast('已经浇过水了');
+      if(!spendEnergy(1))return;
+      plot.watered=true;showFloatNum(plotEl,'💧','#5eb6d6');playSound(.3,.1);
+      addLog('给作物浇了水，晨露落在叶尖，像一小颗会发光的糖。');
+    }else if(state.tool==='harvest'){
+      if(plot.type==='empty')return showToast('这里没种东西');
+      const cropInfo=Object.values(cropMap).find(c=>c.type===plot.type);
+      if(!cropInfo||plot.age<cropInfo.growDays)return showToast('还不能收获，再等等~');
+      if(!spendEnergy(1))return;
+      const type=plot.type;const sellPrice=cropInfo.sell;
+      if(type==='mint')state.inv.mint++;if(type==='nightflower')state.inv.nightflowers++;if(type==='strawberry')state.inv.strawberries++;if(type==='lavender')state.inv.lavenders++;if(type==='sunflower')state.inv.sunflowers++;
+      state.gold+=sellPrice;
+      plot.type='empty';plot.watered=false;plot.age=0;plot.growth=0;state.quest.harvest++;
+      showFloatNum(plotEl,'+'+sellPrice+'G','#5fa34b');playSound(.7,.15);
+      addLog('收获了'+names[type]+'，卖给小镇获得 '+sellPrice+'G。');
+      if(state.quest.harvest===3){state.gold+=25;state.love+=1;showToast('完成任务！好感+1');addLog('完成"把晨露留给第一株草莓"，奖励 25G，陆岚好感+1。')}
+    }else{showToast('请先选择工具');return}
+    levelCheck();render();save()
+  }
+
+  function levelCheck(){const next=1+Math.floor((state.gold+state.love*3)/150);if(next>state.level){state.level=next;showToast('升级了！Lv.'+state.level);playSound(1,.2);addLog('农场等级提升到 '+state.level+' 级！')}}
+
+  // ========== 工具选择 ==========
+  document.querySelectorAll('.tool[data-tool]').forEach(btn=>btn.onclick=()=>{state.tool=btn.dataset.tool;render();showToast('已选择：'+btn.textContent.trim().split(' ')[0]);playSound(.1,.05)});
+
+  // ========== 鸡舍 ==========
+  document.getElementById('coop').onclick=()=>{
+    if(!spendEnergy(2))return;
+    const eggs=1+Math.floor(Math.random()*3);state.inv.eggs+=eggs;state.gold+=eggs*8;state.quest.coop=true;
+    showFloatNum(document.getElementById('coop'),'+'+eggs+'🥚','#f0c94a');playSound(.5,.15);
+    addLog('修好鸡舍门闩，又捡到 '+eggs+' 枚鸡蛋并卖出。陆岚说晚上给你留一份热汤。');render();save()
+  };
+
+  // ========== 酒吧 ==========
+  document.getElementById('bar').onclick=()=>{
+    if(!state.dailyOrder){showToast('今日暂无酒馆订单');return}
+    if(state.quest.barOrder){showToast('今日订单已提交，明天再来吧~');return}
+    const order=state.dailyOrder;
+    if(state.inv[order.need]>=order.needAmt){
+      state.inv[order.need]-=order.needAmt;state.gold+=order.give;state.love+=order.love;state.quest.barOrder=true;
+      showFloatNum(document.getElementById('bar'),'+'+order.give+'G','#ffd36b');playSound(.6,.15);
+      addLog(order.text+' +'+order.give+'G，好感+'+order.love);
+      showToast('订单提交成功！+'+order.give+'G 好感+'+order.love);
+    }else{addLog('酒馆今日订单：需要 '+order.needAmt+' 份'+order.name+'，目前背包只有 '+(state.inv[order.need]||0)+' 份。快去种植吧！');showToast('背包不足，需要 '+order.needAmt+' 份'+order.name)}
+    render();save()
+  };
+
+  // ========== 对话系统 ==========
+  const talksByStage={
+    陌生人:[
+      '陆岚把杯垫推近一点："手冷的话，先捧着这杯热牛奶。"',
+      '他看见你袖口的泥点，没有笑，只递来一张干净手帕。',
+      '"今天的薄荷很新鲜。"陆岚顿了顿，"和你身上的风一样。"',
+      '"第一次来小镇？"他擦着杯子，"这杯酒，算我请你的。"',
+      '陆岚望向窗外的农田："那片地，现在归你了啊。"'
+    ],
+    初识:[
+      '"靠窗的位置给你留着。"他低头擦杯子，"能看见你那片草莓架。"',
+      '"明早如果起雾，我陪你去看第一株草莓。"陆岚说得很轻，却很认真。',
+      '你说想把荒地改成花园时，他在订单本旁画了一颗小小的心。',
+      '"你种的花，"陆岚把特调推过来，"比酒单上的插画还好看。"',
+      '他记住了你不爱喝酒，每次都给你调无酒精版。'
+    ],
+    熟人:[
+      '陆岚递来一份手绘地图："镇上最好的花苗店，我标好了。"',
+      '"如果忙不过来，"他耳尖微红，"我可以请假帮你翻地。"',
+      '你发现他吧台下藏着一个贴着"她"字标签的小本子。',
+      '"下雨天最适合在农场发呆。"他说这话时，没看窗外的雨。',
+      '陆岚学会了做你爱喝的蜂蜜柚子茶，说是"副业拓展"。'
+    ],
+    暧昧:[
+      '"微醺花园季结束后，"陆岚望向你，"我们去河边看夜香花开吧。"',
+      '"新饮品名字想好了。"他耳尖微红，"叫《农场主的心跳》。"',
+      '"你让土地开花。"他把特调推到你面前，"我想负责让你每天都被温柔接住。"',
+      '深夜打烊后，他陪你走回农场。月光下，影子靠得很近。',
+      '陆岚把你的名字写进了酒单备注："VIP，永远免费，永远优先。"'
+    ],
+    心动:[
+      '陆岚从围裙口袋里掏出一个小盒子："不是戒指...是薰衣草种子，我奶奶留给我的。"',
+      '"我想在农场旁边开个分店。"他说，"这样每天第一眼就能看见你。"',
+      '他学会了做你爱吃的所有菜，说是"调酒师的隐藏技能"。',
+      '"等向日葵开满田埂，"他牵起你的手，"我们就去镇上领那个证吧。"',
+      '陆岚在酒单最后一页写："本店最珍贵的藏品，是一位农场主的笑容。"'
+    ],
+    恋人:[
+      '陆岚在你额头印下一个吻："早安，我的农场主。"',
+      '他辞去了城里高薪的工作，只为留在小镇陪你。',
+      '\"今天的特调叫「甜蜜微醺」。\"他笑着说，\"秘方是农场主大人的微笑。\"',
+      '你们在农场搭了一个秋千，他推你时，风里有薄荷和夜香花的味道。',
+      '陆岚在日记里写："调酒是我的事业，但此刻站在田埂上看日落的你，是我最想记住的画面。"'
+    ]
+  };
+
+  function talk(){
+    if(state.dailyTalkCount>=3){showToast('今天已经和陆岚聊过太多次了，让他专心调酒吧~');addLog('陆岚正在专注调酒，今天暂时不方便聊天了。');return}
+    state.dailyTalkCount++;
+    const stage=getLoveStage().name;
+    const arr=talksByStage[stage]||talksByStage['陌生人'];
+    const text=arr[Math.floor(Math.random()*arr.length)];
+    dialogueText.textContent=text;barBubble.textContent=text.split('。')[0]+'。';
+    playerBubble.textContent=stage==='恋人'?'每天都好喜欢你。':stage==='心动'?'...我也想去河边。':stage==='暧昧'?'你、你说什么？':stage==='熟人'?'谢谢你，陆岚。':stage==='初识'?'农场还需要很多努力呢。':'农场的日子比想象中充实。';
+    state.love+=1;state.quest.talk++;
+    showFloatNum(document.getElementById('bartender'),'+1❤️','#f08c8c');playSound(.8,.1);
+    addLog('和陆岚聊了一会儿（今日 '+(3-state.dailyTalkCount)+' 次机会），好感 +1。');
+    if(state.quest.talk===2){state.gold+=15;showToast('完成互动目标！');addLog('完成互动目标，奖励 15G！')}
+    levelCheck();render();save()
+  }
+
+  function gift(){
+    if(state.inv.nightflowers<=0){dialogueText.textContent='陆岚看了看你的空背包："等夜香花开，我会很期待。"';return showToast('背包没有夜香花');}
+    state.inv.nightflowers--;state.love+=4;state.quest.talk++;
+    const stage=getLoveStage().name;
+    let text='你把刚摘下的夜香花递给陆岚。他耳尖微红："今晚的特调，只为你留到最后一杯。" 好感 +4';
+    if(stage==='恋人')text='你把夜香花插在陆岚的衣领上。他笑着低头吻你："每天一束，永远不嫌多。" 好感 +4';
+    else if(stage==='心动')text='陆岚接过花，认真地看着你："这是我收到过最好的礼物。" 好感 +4';
+    dialogueText.textContent=text;barBubble.textContent='这朵夜香花，我会放在吧台最显眼的地方。';
+    showFloatNum(document.getElementById('bartender'),'+4❤️','#bf4f45');playSound(1,.15);
+    addLog(text);levelCheck();render();save()
+  }
+
+  document.getElementById('talkBtn').onclick=talk;
+  document.getElementById('giftBtn').onclick=gift;
+  document.getElementById('bartender').onclick=talk;
+  document.getElementById('bartenderCard').onclick=(e)=>{if(e.target.id!=='bartender')talk()};
+
+  // ========== 睡觉 / 下一天 ==========
+  document.getElementById('restBtn').onclick=()=>{
+    dayTransition.classList.add('show');setTimeout(()=>dayTransition.classList.remove('show'),1200);
+    state.day++;state.energy=18+state.level*2;state.quest={harvest:0,coop:false,talk:0,barOrder:false};
+    state.dailyTalkCount=0;
+    state.dailyOrder=orderPool[Math.floor(Math.random()*orderPool.length)];
+    // 作物生长
+    state.plots.forEach(p=>{if(p.type!=='empty'&&p.watered){p.age++;p.watered=false}});
+    // 随机天气
+    updateWeather();
+    // 每日文本
+    const greetings=['清晨阳光像蜂蜜一样落在田埂上。','鸟叫声把你从梦里唤醒。','露水在窗台上画了一幅画。','第一缕阳光刚好照在床头。','晨风带着薄荷的香气溜进房间。'];
+    const weatherTexts={sunny:'空气里有好闻的干草味。',rainy:'窗外淅淅沥沥的雨声让人想赖床。',foggy:'雾气像一层薄纱笼罩着农场。',snowy:'白雪覆盖了田埂，像撒了一层糖霜。'};
+    const greeting=greetings[Math.floor(Math.random()*greetings.length)];
+    const wt=weatherTexts[state.weather]||'';
+    addLog('第 '+state.day+' 天。'+greeting+' '+wt+' 陆岚的酒馆订单已更新。');
+    // 每日事件
+    setTimeout(()=>triggerDailyEvent(),800);
+    // 更新任务标题
+    const questTitles=['今日小目标：把晨露留给第一株草莓','今日小目标：给陆岚留一束夜香花','今日小目标：雨天也别忘了喂鸡','今日小目标：让农场更热闹一点','今日小目标：和陆岚多说说话'];
+    questTitle.textContent=questTitles[Math.floor(Math.random()*questTitles.length)];
+    showToast('新的一天开始！酒馆订单已更新');playSound(.4,.2);
+    render();save()
+  };
+
+  // ========== 存档 ==========
+  const SAVE_KEY='pixelFarmRomance_v2_1';
+  function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(state));localStorage.setItem(SAVE_KEY+'_backup',JSON.stringify(state))}catch(e){console.warn('存档失败',e)}}
+  function load(){
+    try{
+      let raw=localStorage.getItem(SAVE_KEY);
+      if(!raw)raw=localStorage.getItem(SAVE_KEY+'_backup');
+      if(raw){const s=JSON.parse(raw);Object.assign(state,s);normalizeSaveData();updateWeather()}
+    }catch(e){console.warn('读档失败',e)}
+  }
+
+  // ========== 手动存档 ==========
+  document.getElementById('saveBtn').onclick=()=>{save();showToast('💾 存档成功！');playSound(.5,.15)};
+
+  // ========== 重新开始 ==========
+  document.getElementById('resetBtn').onclick=()=>{
+    document.getElementById('eventTitle').textContent='确认重新开始';
+    document.getElementById('eventDesc').textContent='当前存档将被清除，所有进度（金币、好感、作物、剧情任务）将无法恢复。确定要重新开始吗？';
+    eventOverlay.querySelector('button').textContent='确认重置';
+    eventOverlay.querySelector('button').onclick=()=>{
+      closeEvent();
+      try{localStorage.removeItem(SAVE_KEY);localStorage.removeItem(SAVE_KEY+'_backup')}catch(e){}
+      state.day=1;state.gold=80;state.energy=18;state.love=0;state.level=1;state.tool='seed';state.weather='sunny';
+      state.inv={mint:0,nightflowers:0,strawberries:0,lavenders:0,sunflowers:0,eggs:0,fertilizers:1};
+      state.quest={harvest:0,coop:false,talk:0,barOrder:false};
+      state.plots=Array.from({length:12},()=>({type:'empty',watered:false,age:0,growth:0}));
+      state.achievements={novice:false,rich:false,crush:false,nightflower:false,master:false};
+      state.seenEvents={};state.tutorialDone=true;
+      state.storyQuests={firstMeet:false,rainUmbrella:false,nightVisitor:false,sweetTipsy:false,eternalPromise:false};
+      updateWeather();render();addLog('游戏已重置。欢迎来到像素农场微醺物语！');
+      showToast('🔄 已重新开始游戏');playSound(.6,.2);
+      // 恢复 event button 默认行为
+      eventOverlay.querySelector('button').textContent='知道了';
+      eventOverlay.querySelector('button').onclick=closeEvent;
+    };
+    eventOverlay.classList.add('show');
+  };
+
+  // ========== 初始化 ==========
+  load();
+  if(!state.dailyOrder&&orderPool)state.dailyOrder=orderPool[Math.floor(Math.random()*orderPool.length)];
+  render();
+  if(state.day===1&&state.gold===80&&!state.tutorialDone){
+    // 首次加载，等开场画面关闭后显示教程
+  }else{
+    addLog('欢迎回到《像素农场微醺物语》。今日天气：'+weatherTypes.find(w=>w.id===state.weather)?.name+'。');
+  }
+
+  // 键盘快捷键
+  document.addEventListener('keydown',(e)=>{
+    if(document.getElementById('splash').classList.contains('hidden')&&!eventOverlay.classList.contains('show')){
+      if(e.key==='1'){state.tool='seed';render();showToast('播种')}
+      else if(e.key==='2'){state.tool='water';render();showToast('浇水')}
+      else if(e.key==='3'){state.tool='harvest';render();showToast('收获')}
+      else if(e.key==='4'){state.tool='fertilizer';render();showToast('施肥')}
+      else if(e.key===' ')talk()
+    }
+  })
+</script>
+</body>
+</html>

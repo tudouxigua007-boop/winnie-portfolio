@@ -500,6 +500,42 @@
       border: 1px solid var(--hairline-soft);
     }
 
+    .case-study-link {
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      border-radius: 32px;
+    }
+
+    .case-study-link:hover {
+      transform: translateY(-2px);
+      box-shadow: rgba(0, 0, 0, 0.06) 0px 8px 24px -4px;
+    }
+
+    .case-study-link .case-visual {
+      position: relative;
+    }
+
+    .case-study-link .case-visual::after {
+      content: "点击体验 →";
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      background: var(--primary);
+      color: var(--on-primary);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .case-study-link:hover .case-visual::after {
+      opacity: 1;
+    }
+
     .case-study.reverse .case-text { order: 2; }
 
     .case-text .case-eyebrow {
@@ -635,7 +671,7 @@
     <h2 class="section-title">精选作品</h2>
     <p class="section-subtitle">从独立游戏原型到情感状态分析工具，每个项目都围绕“叙事、机制、用户情绪与AI落地”展开。</p>
     <div class="project-grid">
-      <div class="project-card project-card-coral">
+      <a href="farm-romance-game.html" class="project-card project-card-coral" style="text-decoration:none;color:inherit;">
         <div>
           <div class="project-card-header">
             <div class="project-card-icon">&#127912;</div>
@@ -646,7 +682,7 @@
           <h3>像素农场微醺物语</h3>
           <p>女性向“农场模拟经营+NPC互动”独立游戏原型，规划播种、浇水、收获、金币与体力循环，并设计调酒师陆岚的好感度互动系统。</p>
         </div>
-      </div>
+      </a>
       <div class="project-card project-card-magenta">
         <div>
           <div class="project-card-header">
@@ -734,6 +770,7 @@
       </article>
 
       <!-- Case 02: 像素农场微醺物语 -->
+      <a href="farm-romance-game.html" class="case-study-link">
       <article class="case-study reverse">
         <div class="case-visual">
           <img src="assets/farm_main.jpg" alt="像素农场微醺物语 主界面截图">
@@ -744,9 +781,9 @@
           <p class="case-tagline">我策划并搭建的女性向独立游戏原型：白天经营农场，傍晚在酒吧与调酒师陆岚培养感情，把模拟经营与恋爱叙事融合。</p>
           <ul>
             <li>核心循环：播种 / 浇水 / 收获 / 照顾鸡舍 ↔ 金币 · 体力 · 好感度 · 等级</li>
-            <li>NPC 陆岚情感线：聊天 / 送花互动、好感度提升、调酒店“农场主的心跳”支线</li>
+            <li>NPC 陆岚情感线：聊天 / 送花互动、好感度提升、调酒店"农场主的心跳"支线</li>
             <li>UI 模块化：日期、金币、体力、好感、等级 5 项核心状态栏</li>
-            <li>系统左栏“农场工具”+ 右栏“今日小目标 / 农场背包”闭合每日玩法</li>
+            <li>系统左栏"农场工具"+ 右栏"今日小目标 / 农场背包"闭合每日玩法</li>
           </ul>
           <div class="case-meta">
             <span class="case-tag">女性向游戏</span>
@@ -756,6 +793,7 @@
           </div>
         </div>
       </article>
+      </a>
 
       <!-- Case 03: Eazo 暧昧期聊天分析 -->
       <article class="case-study">
