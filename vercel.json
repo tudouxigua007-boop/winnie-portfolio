@@ -1,10 +1,8 @@
 {
-  "cleanUrls": true,
-  "trailingSlash": false,
-  "rewrites": [
+  "routes": [
     {
-      "source": "/(.*)",
-      "destination": "/wordnovel/$1",
+      "src": "/(.*)",
+      "dest": "/wordnovel/$1",
       "has": [{ "type": "host", "value": "wordnovel.wangyn.work" }]
     }
   ]
